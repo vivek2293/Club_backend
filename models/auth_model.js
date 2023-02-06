@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const schema = new mongoose.Schema({
-    clubname: {
+    clubName: {
         type: String,
         trim: true,
         required: [true, "Must provide clubname"],

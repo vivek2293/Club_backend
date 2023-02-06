@@ -13,7 +13,6 @@ const refreshToken = async (req,res,next) => {
         if(isCorrectToken === false) return res.sendStatus(401);
 
         const payload = jwt.decode(req.cookies.jwt, process.env.JWT_REFRESH_SECRET);
-        console.log(payload)
         const club = payload.club;
         
         const accesstoken = jwt.sign({ club }, process.env.JWT_SECRET,{ expiresIn: "2m" });

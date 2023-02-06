@@ -8,18 +8,18 @@ const getRequest = async (req,res) => {
 }
 
 const register = async (req,res) => {
-    const { clubname , password, confirmPassword } = req.body;
+    const { clubName , password, confirmPassword } = req.body;
     if(password !== confirmPassword){
         return res.status(403).json({ msg : "Invalid credentials."})
     }
 
     const hashedpassword = await bcrypt.hash( password, 10);
     const profile = {
-        clubname,
+        clubName,
         hashedpassword
     }
 
-    authentication.create({ clubname, password: hashedpassword}).then(() => {
+    authentication.create({ clubName, password: hashedpassword}).then(() => {
         console.log("Profile successfully created.")
     })
     .catch((err) => {
@@ -36,8 +36,8 @@ const register = async (req,res) => {
 }
 
 const login = async (req,res) => {
-    const { clubname, password } = req.body;
-    const profile = await authentication.find({ clubname });
+    const { clubName, password } = req.body;
+    const profile = await authentication.find({ clubName });
     if(profile.length != 1) return res.status(403).json({ msg: "Club not found." });
 
     if(await bcrypt.compare(password, profile[0].password)){
