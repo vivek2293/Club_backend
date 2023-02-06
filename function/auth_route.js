@@ -1,28 +1,64 @@
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const authentication = require("../models/auth_model");
 
-const getRequest = (req,res) => {
-    res.json({
-        message: "Hey, there! Welcome to this API service"
-    });
+const getRequest = async (req,res) => {
+    const data = await authentication.find({});
+    res.json({ data });
 }
 
-const register = (req,res) => {
-    const user = {
-        id: 1,
-        username: "john",
-        email: "john@gmail.com"
-    };
+const register = async (req,res) => {
+    const { clubname , password, confirmPassword } = req.body;
+    if(password !== confirmPassword){
+        return res.status(403).json({ msg : "Invalid credentials."})
+    }
 
-    jwt.sign({ user }, process.env.JWT_SECRET, (err,token) => {
-        res.json({ token });
-    });
+    const hashedpassword = await bcrypt.hash( password, 10);
+    const profile = {
+        clubname,
+        hashedpassword
+    }
+
+    authentication.create({ clubname, password: hashedpassword}).then(() => {
+        console.log("Profile successfully created.")
+    })
+    .catch((err) => {
+        console.log(err);
+    })
+
+    const accesstoken = jwt.sign({ club: profile }, process.env.JWT_SECRET,{ expiresIn: "2m" });
+    const refreshtoken = jwt.sign({ club: profile }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7 day" });
+    
+    return res.cookie('jwt', refreshtoken, {
+        httpOnly: true,
+        maxAge: 10*24*60*60*1000
+    }).json({ token: accesstoken })
 }
 
-const login = (req,res) => {
+const login = async (req,res) => {
+    const { clubname, password } = req.body;
+    const profile = await authentication.find({ clubname });
+    if(profile.length != 1) return res.status(403).json({ msg: "Club not found." });
+
+    if(await bcrypt.compare(password, profile[0].password)){
+        const club = profile[0];
+        const accesstoken = jwt.sign({ club }, process.env.JWT_SECRET,{ expiresIn: "2m" });
+        const refreshtoken = jwt.sign({ club }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7 day" });
+        res.cookie('jwt', refreshtoken, {
+            httpOnly: true,
+            maxAge: 10*24*60*60*1000
+        });
+        return res.json({ token: accesstoken })
+    }
+    else return res.status(403).json({ msg: "Invalid Credentials."})
+}
+
+const verify = (req,res) => {
     jwt.verify(req.token, process.env.JWT_SECRET, (err, authData) => {
-        if(err) res.sendStatus(403);
+        if(err) res.sendStatus(401);
         else res.json({
             message: "POST created....",
+            token: req.token,
             authData
         });
     });
@@ -31,5 +67,6 @@ const login = (req,res) => {
 module.exports = {
     getRequest,
     register,
-    login
+    login,
+    verify
 }
