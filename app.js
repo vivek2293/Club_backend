@@ -7,7 +7,7 @@ const cors = require("cors");
 const routes = require("./routes/route");
 
 //Configuring dotenv
-require("dotenv").config();
+dotenv.config();
 
 //Connecting database
 connect(process.env.MONGO_URI);

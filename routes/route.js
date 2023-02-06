@@ -18,6 +18,7 @@ const {
 const {
     refreshToken,
 } = require("../function/refresh_token");
+const { verifyEmail } = require("../function/nodemailer");
 
 router.get("/getData", getRequest);
 router.post("/auth/create", register);
@@ -25,5 +26,6 @@ router.post("/auth/login", login);
 router.post("/auth/verify", verifyToken, refreshToken, verify);
 
 router.post("/list/club", getAllClubList);
+router.post("/sendMail", verifyEmail)
 
 module.exports = router;
