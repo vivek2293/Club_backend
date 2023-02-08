@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-const mail = ( clientMail, subject, message) => {
+const mail = async ( clientMail, subject, message) => {
     const transporter = nodemailer.createTransport({
         host: "smtp-mail.outlook.com",
         secureConnection: false,

@@ -7,6 +7,12 @@ const schema = new mongoose.Schema({
         required: [true, "Must provide clubname"],
         unique: [true, "Clubname should be unique."]
     },
+    email: {
+        type: String,
+        trim: true,
+        required: [true, "Must provide email."],
+        unique: [true, "Email should be unique."]
+    },
     password: {
         type: String,
         required: [true, "Must provide password"],

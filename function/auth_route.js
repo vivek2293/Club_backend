@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const authentication = require("../models/auth_model");
+const sendMail = require("./mailer");
 
 const getRequest = async (req,res) => {
     const data = await authentication.find({});
@@ -8,7 +9,7 @@ const getRequest = async (req,res) => {
 }
 
 const register = async (req,res) => {
-    const { clubName , password, confirmPassword } = req.body;
+    const { clubName , email, password, confirmPassword } = req.body;
     if(password !== confirmPassword){
         return res.status(403).json({ msg : "Invalid credentials."})
     }
@@ -19,7 +20,7 @@ const register = async (req,res) => {
         hashedpassword
     }
 
-    authentication.create({ clubName, password: hashedpassword}).then(() => {
+    authentication.create({ clubName, email, password: hashedpassword }).then(() => {
         console.log("Profile successfully created.")
     })
     .catch((err) => {
@@ -64,9 +65,62 @@ const verify = (req,res) => {
     });
 }
 
+const forgotPassword = async(req,res) => {
+    const { email } = req.body;
+    const doc = await authentication.find({ email });
+    if( doc.length === 1){
+        console.log( "Valid email.")
+        //generate a token and send it via email
+        const token = jwt.sign({ email}, process.env.JWT_FORGOT_PASSWORD_SECRET, { expiresIn: "10m" });
+        const link = process.env.SERVER_LINK + "/forgotPassword?token=" + token;
+        console.log(link);
+    }
+    else console.log("Invalid Email")
+    res.status(200).send("Email Sent");
+}
+
+const resetPassword = async(req,res) => {
+    //verify if token correct
+    let flag = true;
+    const { token, password, confirmPassword } = req.body;
+    if(typeof(token) === "undefined" || token.length === 0) flag = false;
+    jwt.verify(token, process.env.JWT_FORGOT_PASSWORD_SECRET, (err) => {
+        if(err){
+            console.log(err);
+            flag = false;
+        }
+    });
+
+    //verify password and confirm password
+    if(password !== confirmPassword){
+        console.log("Password and confirm password does not match.")
+        flag = false;
+    }
+
+    if(flag === false) return res.sendStatus(400);
+
+    // extract payload
+    const data = jwt.decode(token , process.env.JWT_FORGOT_PASSWORD_SECRET, (err) => {
+        if(err){
+            console.log(err);
+        }
+    })
+
+    //find the document by email and update password field
+    const filter = { email: data.email };
+    let message = "Password successfully changed.";
+    const hashedpassword = await bcrypt.hash( password, 10);
+    await authentication.findOneAndUpdate( filter, { password: hashedpassword }, { new: true })
+    .catch((err) => { message = err });
+
+    res.status(200).json({ "msg" : message});
+}
+
 module.exports = {
     getRequest,
     register,
     login,
-    verify
+    verify,
+    forgotPassword,
+    resetPassword
 }
