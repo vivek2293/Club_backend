@@ -1,32 +1,37 @@
 const express = require("express");
 const router = express.Router();
 
+
 const {
-    getRequest,
-    register,
-    login,
-    verify,
-    forgotPassword,
-    resetPassword,
-} = require("../function/auth_route");
+    getAllAdminList,
+    adminRegister,
+    adminLogin,
+    adminVerify
+} = require("../function/auth_admin_route");
 
 const {
     getAllClubList,
-    updateClub,
-    deleteClub
-} = require("../function/club_info");
+    clubRegister,
+    clubLogin,
+    clubVerify
+} = require("../function/auth_club_route");
 
-const { verifyToken } = require("../function/verify_token");
-const { refreshToken } = require("../function/refresh_token");
 
-router.get("/getData", getRequest);
-router.post("/auth/create", register);
-router.post("/auth/login", login);
-router.post("/auth/verify", verifyToken, refreshToken, verify);
-router.post("/auth/forgotPassword", forgotPassword);
-router.patch("/auth/resetPassword", resetPassword);
-router.post("/list/club", getAllClubList);
-router.patch("/list/update", updateClub);
-router.delete("/list/delete", deleteClub);
+const { verifyToken } = require("../middleware/verify_token");
+const { refreshToken } = require("../middleware/refresh_token");
+
+
+// Admin Routes
+router.get("/auth/admin/getData", getAllAdminList);
+router.post("/auth/admin/register", adminRegister);
+router.post("/auth/admin/login", adminLogin);
+router.post("/auth/admin/authVerify", verifyToken, refreshToken, adminVerify);
+
+// Club Authentication Routes
+router.get("/auth/club/getData", getAllClubList);
+router.post("/auth/club/register", clubRegister);
+router.post("/auth/club/login", clubLogin);
+router.post("/auth/club/clubVerify", verifyToken, refreshToken, clubVerify);
+
 
 module.exports = router;
